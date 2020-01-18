@@ -4,12 +4,12 @@
 #include <stdio.h>
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1) 
-#define MAX_READINGS 20
+#define MAX_READINGS 100
 uint16_t i=0,del_time=100,inc=3;
 uint16_t samples=100;
 uint16_t settings[10][10],setting_ind=0;
 uint16_t readings[100],read_index=0;
-boolean read_on=true;
+boolean read_on=false,sending=false;
 
 void timer1init(){
     cli();
@@ -30,7 +30,7 @@ void timer1init(){
             (1<<CS12) |
             (1<<CS10);
 
-      OCR1A = 0x3D08;
+      OCR1A = 0x3D08;//0x9C;//0xA; 
 
       // OCIE1A interrupt flag set
       TIMSK1 |= (1<<OCIE1A);
@@ -96,13 +96,18 @@ ISR(USART_RX_vect)//USART_RX_vecta
 }
 
 ISR (TIMER1_COMPA_vect){
-  if(read_on)
-    if(read_index>=MAX_READINGS)
-      read_on=false;
-    else{
-      readings[read_index++]=readAdc(0);
-       PORTB^=(1<<5);}
- 
+  if(!sending){
+    uint16_t val=readAdc(0);
+    if(val>300)
+      read_on=true;
+    if(read_on){
+      if(read_index>=MAX_READINGS){
+        read_on=false;sending=true;}
+      else{
+        readings[read_index++]=val;
+        PORTB^=(1<<5);}
+    }
+  }
 }
 
 void setup() {
@@ -131,7 +136,7 @@ void sendint(uint16_t t){
 
 void loop() {
   uint16_t i=0;
-  if(!read_on){
+  if(!read_on&&sending){
     for(i=0;i<read_index;i++){
       //sendint(readings[i]);
       UART_TxChar(readings[i]>>8);
@@ -139,8 +144,9 @@ void loop() {
       //UART_TxChar('\n');
       }
     read_index=0;
-    read_on=true;}
-    delay(10000);
+    sending=false;
+    read_on=false;}
+    //delay(10000);
   /*
   PORTC&=~(1<<0);
   uint16_t readdata=readAdc(0);
