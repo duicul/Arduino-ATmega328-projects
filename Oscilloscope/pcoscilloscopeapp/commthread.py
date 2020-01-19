@@ -30,7 +30,9 @@ class CommunicationThread(threading.Thread):
             bapres=bytearray(1)
             bapres[0]=pres+ord('0')
             no_byte=self.app.ser.write(chr(pres).encode("latin1"))
-            #print(str(no_byte)+"bytes")
+            print(str(no_byte)+"bytes")
+            print(chr(pres).encode("latin1"))
+            print(ord(chr(pres).encode("latin1")))
             #print(self.app.ser.read(no_byte))
             time.sleep(5)
             #time.sleep(1)
@@ -38,12 +40,16 @@ class CommunicationThread(threading.Thread):
             ba[0]=timereg%256
             ba[1]=int(timereg/256)
             no_byte=self.app.ser.write(chr(int(timereg/256)).encode("latin1"))
-            #print(str(no_byte)+"bytes")
+            print(str(no_byte)+"bytes")
+            print(chr(int(timereg/256)).encode("latin1"))
+            print(ord(chr(int(timereg/256)).encode("latin1")))
             #print(self.app.ser.read(no_byte))
             time.sleep(5)
             #time.sleep(1)
             no_byte=self.app.ser.write(chr(timereg%256).encode("latin1"))
-            #print(str(no_byte)+"bytes")
+            print(str(no_byte)+"bytes")
+            print(chr(timereg%256).encode("latin1"))
+            print(ord(chr(timereg%256).encode("latin1")))
             #print(self.app.ser.read(no_byte))
             time.sleep(5)
             #time.sleep(1)
@@ -53,6 +59,8 @@ class CommunicationThread(threading.Thread):
             while not self.shutdown_flag.is_set():
                 vals=[]
                 for i in range(self.app.sample_no):
+                    if self.app.ser == None:
+                        return
                     val=val=int.from_bytes(self.app.ser.read(2), "big")
                     vin=int(val)*5/1024
                     vals.append(vin)
