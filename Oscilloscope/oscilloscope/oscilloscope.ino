@@ -5,11 +5,20 @@
 #define USART_BAUDRATE 9600
 #define BAUD_PRESCALE (((F_CPU / (USART_BAUDRATE * 16UL))) - 1) 
 #define MAX_READINGS 100
+#define PRESC1 1
+#define PRESC8 2
+#define PRESC64 3
+#define PRESC256 4
+#define PRESC1024 5
 uint16_t i=0,del_time=100,inc=3;
 uint16_t samples=100;
 uint16_t settings[10][10],setting_ind=0;
-uint16_t readings[100],read_index=0;
-boolean read_on=false,sending=false;
+volatile uint16_t readings[100],read_index=0;
+volatile uint8_t pres=5,bytes_read=0;
+volatile uint16_t timerval=0x3D08;
+volatile boolean read_on=false,sending=false;
+
+volatile boolean serial_reading=false,writing_config=false;
 
 void timer1init(){
     cli();
@@ -78,24 +87,56 @@ void USART_Flush(void)
 unsigned char UART_RxChar()
 { //USART_Flush();
   while (!(UCSR0A & (1 << RXC0)));/* Wait till data is received */
-  PORTB^=(1<<5);
+  //PORTB^=(1<<5);
   return(UDR0);    /* Return the byte */
 }
 
 void UART_TxChar(char ch)
 { while (! (UCSR0A & (1<<UDRE0)));  /* Wait for empty transmit buffer */
-  PORTB^=(1<<5);
+  //PORTB^=(1<<5);
   UDR0 = ch ;
 }
+
+void writeconfig(){
+  cli();
+  TCCR1B &= ~((1<<CS12)|(1<<CS11)|(1<<CS10));//cleaning bytes
+  TCCR1B |= (pres&0x7);
+  OCR1A = timerval;//timer period
+  TIMSK1 |= (1<<OCIE1A);
+  TCNT1 = 0;
+  read_index=0;
+  writing_config=false;
+  sei();
+}
+
 
 ISR(USART_RX_vect)//USART_RX_vecta
 { char ReceivedByte;
   ReceivedByte=UDR0;
-  UDR0=ReceivedByte;
-  PORTB^=(1<<5);
+  //UDR0=ReceivedByte;
+  if(bytes_read==0){
+    if(!(ReceivedByte==PRESC1||ReceivedByte==PRESC8||ReceivedByte==PRESC64||ReceivedByte==PRESC256||ReceivedByte==PRESC1024))
+      return;
+    //PORTB^=(1<<5);
+    serial_reading=true;
+    pres=ReceivedByte;
+    bytes_read=1;
+    PORTB^=(1<<5);}
+  else if(bytes_read==1){
+    timerval=ReceivedByte<<8;bytes_read=2;
+    PORTB^=(1<<5);}
+  else if(bytes_read==2){
+    timerval|=ReceivedByte;
+    bytes_read=0;
+    writing_config=true;
+    serial_reading=false;
+    writeconfig();/*UART_TxChar(0);*/
+    PORTB^=(1<<5);} 
 }
 
 ISR (TIMER1_COMPA_vect){
+  if(serial_reading||writing_config)
+    return;
   if(!sending){
     uint16_t val=readAdc(0);
     if(val>300)
@@ -105,14 +146,15 @@ ISR (TIMER1_COMPA_vect){
         read_on=false;sending=true;}
       else{
         readings[read_index++]=val;
-        PORTB^=(1<<5);}
+        //PORTB^=(1<<5);
+        }
     }
   }
 }
 
 void setup() {
   DDRB|=(1<<5);
-  PORTB&=~(1<<5);
+  //PORTB&=~(1<<5);
   UART_init();
   //UART_TxChar('2');
   DDRC|=(1<<0);
