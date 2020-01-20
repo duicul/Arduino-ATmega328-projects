@@ -74,7 +74,7 @@ class PlotCanvas(FigureCanvas):
         ticksaux=[0,0,1,2,3,4,5,6,7,8,9,10]
         ticks=[]
         for i in ticksaux:
-            ticks.append(str(i*timeval*10)+" "+timescalename)
+            ticks.append(str(round(i*timeval*10,2))+" "+timescalename)
         self.axes.set_xticklabels(ticks)
         self.axes.set_title('Screen')
         self.draw()
