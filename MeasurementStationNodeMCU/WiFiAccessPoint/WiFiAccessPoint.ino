@@ -18,10 +18,10 @@ ESP8266WebServer server(80);
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
    connected to this access point to see it.
 */
-void handleRoot() {
+/*void handleRoot() {
   Serial.println("Request on /");
   server.send(200, "text/html", "<h1>Use /change?SSID=newssid&PSK=newpsk to change credentials</h1>");
-}
+}*/
 
 void handlechangecredentials() { 
     String message = "";
@@ -29,10 +29,35 @@ void handlechangecredentials() {
     s.toCharArray(ssid,20);
     p.toCharArray(password,20);
     message=s+"  "+p;
-    server.send(200, "text/plain", message);          //Returns the HTTP response
+    server.send(200, "text/plain", message);
     saveCredentials();
     delay(2000);
     ESP.restart();
+}
+
+void handleRoot(){
+  Serial.println("scan start");
+  int n = 0;
+  n = WiFi.scanNetworks();
+  String mess="<!DOCTYPE HTML>\r\n<html>";
+  mess+="<head><meta content=\"text/html;charset=utf-8\" http-equiv=\"Content-Type\"><meta content=\"utf-8\" http-equiv=\"encoding\"></head>\r\n";
+  mess+="<body>";
+  mess+=n;
+  mess+=" networks found </br>";
+  for (int q = 0; q < n; ++q) {
+    mess+=(q+1);
+    mess+=": ";
+    mess+=WiFi.SSID(q);
+    mess+=" <-> ";
+    mess+=WiFi.RSSI(q);
+    mess+=" ";
+    mess+=WiFi.encryptionType(q);
+    mess+="</br>";
+    delay(10);
+  }
+  mess+="<form method='get' action='change'><label>SSID: </label><input name='SSID' length=32><label>Paswoord: </label><input name='PSK' length=64><input type='submit'></form>";
+  mess+="</body></html>";
+  server.send(200, "text/html", mess);
 }
 
 void loadCredentials() {
@@ -88,6 +113,7 @@ void setup() {
   Serial.println(WiFi.localIP());
   server.on("/", handleRoot);
   server.on("/change", handlechangecredentials);
+  //server.on("/scan", handlescan);
   server.begin();
   Serial.println("HTTP server started");
 }
