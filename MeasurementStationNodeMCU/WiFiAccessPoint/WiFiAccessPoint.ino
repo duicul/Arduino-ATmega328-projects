@@ -31,6 +31,7 @@ void handlechangecredentials() {
     message=s+"  "+p;
     server.send(200, "text/plain", message);
     saveCredentials();
+    //delayMicroseconds(100);
     delay(2000);
     ESP.restart();
 }
