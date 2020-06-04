@@ -61,7 +61,7 @@ class CommunicationThread(threading.Thread):
                 for i in range(self.app.sample_no):
                     if self.app.ser == None:
                         return
-                    val=val=int.from_bytes(self.app.ser.read(2), "big")
+                    val=int.from_bytes(self.app.ser.read(2), "big")
                     vin=int(val)*5/1024
                     vals.append(vin)
                 print("Samples: "+str(len(vals)))

@@ -2,17 +2,32 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 #ifndef APSSID
 #define APSSID "HomeMeasurement_1"
 #define APPSK  ""
 #endif
 
+#define ONE_WIRE_BUS 2
+#define TEMPERATURE_PRECISION 9
+
+#define DIVIDER 50
+#define VOLTAGE_CONTROL1 5
+
+// Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+
+// Pass our oneWire reference to Dallas Temperature. 
+DallasTemperature sensors(&oneWire);
+DeviceAddress temp1, temp2;
+
 /* Set these to your desired credentials. */
 const char *ssid_ap = APSSID;
 const char *password_ap = APPSK;
 char ssid[20],password[20];
-
+boolean access_point=false;
 ESP8266WebServer server(80);
 
 /* Just a little test message.  Go to http://192.168.4.1 in a web browser
@@ -22,6 +37,34 @@ ESP8266WebServer server(80);
   Serial.println("Request on /");
   server.send(200, "text/html", "<h1>Use /change?SSID=newssid&PSK=newpsk to change credentials</h1>");
 }*/
+
+void handleVoltage(){
+  digitalWrite(VOLTAGE_CONTROL1, HIGH);
+  delay(500);
+  float volt1digit = analogRead(A0);
+  float volt1=volt1digit*50*3.3/1023;
+  digitalWrite(VOLTAGE_CONTROL1, LOW);
+  String message="{";
+  message+="\"volt1\":";
+  message+=volt1;
+  message+=",\"volt1digit\":";
+  message+=volt1digit;
+  message+="}";
+  server.send(200, "application/json", message);
+}
+
+void handleTemperature(){
+  sensors.requestTemperatures();
+  float tempC1 = sensors.getTempC(temp1);
+  float tempC2 = sensors.getTempC(temp2);
+  String message="{";
+  message+="\"temp1\":";
+  message+=tempC1;
+  message+=",\"temp2\":";
+  message+=tempC2;
+  message+="}";
+  server.send(200, "application/json", message);
+}
 
 void handlechangecredentials() { 
     String message = "";
@@ -109,16 +152,29 @@ void setup() {
     WiFi.softAP(ssid_ap);
     IPAddress myIP = WiFi.softAPIP();
     Serial.println("AP IP address: ");
-    Serial.println(myIP);}
+    Serial.println(myIP);
+    access_point=true;}
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.on("/", handleRoot);
+  server.on("/temperature", handleTemperature);
+  server.on("/voltage", handleVoltage);
   server.on("/change", handlechangecredentials);
   //server.on("/scan", handlescan);
   server.begin();
   Serial.println("HTTP server started");
+  // Start up the library
+  sensors.begin();
+  if (!sensors.getAddress(temp1, 0)) Serial.println("Unable to find address for Device 0");
+  if (!sensors.getAddress(temp2, 1)) Serial.println("Unable to find address for Device 1");
+  sensors.setResolution(temp1, TEMPERATURE_PRECISION);
+  sensors.setResolution(temp2, TEMPERATURE_PRECISION);
+  pinMode(VOLTAGE_CONTROL1, OUTPUT);
+  digitalWrite(VOLTAGE_CONTROL1, LOW);
 }
 
 void loop() {
+  if(!access_point&&WiFi.status() != WL_CONNECTED)
+    ESP.restart();
   server.handleClient();
 }

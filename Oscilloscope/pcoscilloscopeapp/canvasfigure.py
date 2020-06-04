@@ -24,6 +24,7 @@ class PlotCanvas(FigureCanvas):
         
     def plot(self,data):
       try:
+        data=[i/self.app.divider for i in data]
         self.axes.clear()
         #ax = self.figure.add_subplot(111)
         minval=min(data)

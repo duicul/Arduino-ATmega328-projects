@@ -31,6 +31,7 @@ class Window(QWidget):
         self.voltsperdiv=0.25
         self.timeus=1000000
         self.freqhz=1
+        self.divider=1
         
         self.graphWidget = PlotCanvas(app=self,width=100, height=100)
         self.graphWidget.mpl_connect('button_press_event', self.onclick_coord)
@@ -117,6 +118,12 @@ class Window(QWidget):
         self.buttonfreqscale = QPushButton("Applyfreqscale")
         self.buttonfreqscale.clicked.connect(self.freqchanged)
         grid.addWidget(self.buttonfreqscale,7,3)
+
+        divider=QLabel("Divider:")
+        grid.addWidget(divider,8,0)
+        self.dividerval = QLineEdit("1")
+        self.dividerval.setValidator(QDoubleValidator())
+        grid.addWidget(self.dividerval,8,1)
         
         self.setLayout(grid)
         self.setGeometry(50,50,1200,800)
@@ -322,6 +329,10 @@ class Window(QWidget):
 
     
     def draw(self):
+        if len(self.freqscaleval.text()) == 0:
+            self.divider=1
+        else:
+            self.divider=float(self.freqscaleval.text())
         self.graphWidget.plot(self.samples)
 
 if __name__ == '__main__':
