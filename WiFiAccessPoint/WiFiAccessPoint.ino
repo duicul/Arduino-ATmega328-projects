@@ -11,15 +11,16 @@
 ESP8266WebServer server(80);
 boolean access_point = false;
 
-Temperature_data temp=Temperature_data(4,9);
-Voltage_data volt=Voltage_data(D1,50);
-AC_data ac=AC_data(D7,D8);
+Temperature_data temp=Temperature_data(D8,9);//4 now 15
+Voltage_data volt=Voltage_data(A0,50); //5
+AC_data ac=AC_data(D6,D5); // 12 14
 Credentials cred=Credentials();
 
 volatile uint32_t access_point_start = 0;
 
 void handleRestart() {
   server.send(200, "text/plain", "restart");
+  delay(2000);
   ESP.restart();
 }
 
@@ -80,18 +81,23 @@ void handleRoot() {
 void setup() {
   delay(1000);
   Serial.begin(115200);
+  
   cred.loadCredentials();
+  
   Serial.println();
   Serial.print("Configuring access point...");
   /* You can remove the password parameter if you want the AP to be open. */
+  
   WiFi.mode(WIFI_STA);
   WiFi.begin(cred.getssid(), cred.getpassword());
+  
   boolean connect = false;
+  
   int count = 0;
   while (WiFi.status() != WL_CONNECTED && count++ < 50) {
     delay(2000);
-    Serial.print(".");
-  }
+    Serial.print(".");}
+    
   Serial.println();
   if (WiFi.status() != WL_CONNECTED)
   { Serial.println("Not connected creating acces point : ");
@@ -102,6 +108,7 @@ void setup() {
     access_point = true;
     access_point_start = millis();
   }
+  
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.on("/", handleRoot);
@@ -114,6 +121,9 @@ void setup() {
   Serial.println("HTTP server started");
   // Start up the library
   
+  Serial.println(temp.read_data());
+  Serial.println(volt.read_data());
+  Serial.println(ac.read_data());
   
 }
 

@@ -16,9 +16,11 @@ class Temperature_data: public Data_interface {
     DeviceAddress temp1, temp2;
     OneWire oneWire;
     int pin,precision;
+    bool t1,t2;
   public:
     Temperature_data(int pin,int precision);
-	  String read_data();	
+	  String read_data();
+    void init_addr();
 };
 
 #endif
