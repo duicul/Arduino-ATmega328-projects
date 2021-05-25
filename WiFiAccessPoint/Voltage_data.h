@@ -10,9 +10,10 @@
 class Voltage_data: public Data_interface {
   
   private:
-    int pin,divider;
+    int pin;
+    float ratio;
   public:
-    Voltage_data(int pin,int divider);
+    Voltage_data(int pin,float ratio);
     String read_data(); 
 };
 

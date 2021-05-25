@@ -11,10 +11,12 @@
 ESP8266WebServer server(80);
 boolean access_point = false;
 
+
+Credentials cred=Credentials();
+
 Temperature_data temp=Temperature_data(D8,9);//4 now 15
 Voltage_data volt=Voltage_data(A0,50); //5
 AC_data ac=AC_data(D6,D5); // 12 14
-Credentials cred=Credentials();
 
 volatile uint32_t access_point_start = 0;
 
@@ -41,11 +43,11 @@ void handleTemperature() {
 
 void handlechangecredentials() {
   String message = "";
-  String s = server.arg("SSID"), p = server.arg("PSK");
+  String s = server.arg("SSID"), p = server.arg("PSK"),ratio=server.arg("ratio");
   char ssid[20],password[20];
   s.toCharArray(ssid, 20);
   p.toCharArray(password, 20);
-  cred.setCredentials(ssid,password);
+  cred.setCredentials(ssid,password,ratio.toFloat());
   message = s + "  " + p;
   server.send(200, "text/plain", message);
   cred.saveCredentials();
@@ -73,7 +75,7 @@ void handleRoot() {
     mess += "</br>";
     delay(10);
   }
-  mess += "<form method='get' action='change'><label>SSID: </label><input name='SSID' length=32><label>Paswoord: </label><input name='PSK' length=64><input type='submit'></form>";
+  mess += "<form method='get' action='change'><label>SSID: </label><input name='SSID' length=32><label>Paswoord: </label><input name='PSK' length=64><label>Ratio:</label><input name=\"ratio\" type=\"number\" step=\"0.1\" value=\""+(String)cred.getratio()+"\"><input type='submit'></form>";
   mess += "</body></html>";
   server.send(200, "text/html", mess);
 }
@@ -81,7 +83,7 @@ void handleRoot() {
 void setup() {
   delay(1000);
   Serial.begin(115200);
-  
+
   cred.loadCredentials();
   
   Serial.println();
@@ -108,6 +110,11 @@ void setup() {
     access_point = true;
     access_point_start = millis();
   }
+
+  temp=Temperature_data(D8,9);//4 now 15
+  volt=Voltage_data(A0,50); //5
+  ac=AC_data(D6,D5); // 12 14
+  
   
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());

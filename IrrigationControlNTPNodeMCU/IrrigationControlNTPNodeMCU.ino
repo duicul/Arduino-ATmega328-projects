@@ -56,7 +56,7 @@ void handleStop(){
 }
 
 void handleRemaining(){
-  String message = "{\"remaining\":"+(String)remainingMins+"}";
+  String message = "{\"remaining\":"+(String)remainingMins+",\"water\":"+(String)water+"}";
   server.send(200, "application/json", message);
 }
 
