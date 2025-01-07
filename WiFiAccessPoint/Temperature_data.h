@@ -13,7 +13,8 @@ class Temperature_data: public Data_interface {
   
   private:
 	  DallasTemperature sensors;
-    DeviceAddress temp1, temp2;
+    uint8_t address_temp1[8],address_temp2[8];
+    //DeviceAddress temp1, temp2;
     OneWire oneWire;
     int pin,precision;
     bool t1,t2;

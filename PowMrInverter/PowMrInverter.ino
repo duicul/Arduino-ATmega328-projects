@@ -1,24 +1,20 @@
-//#include <ESP8266WiFi.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-//#include <ESP8266WebServer.h>
-#include <WebServer.h>
+#include <ESP8266WebServer.h>
 
-#include "Temperature_data.h"
-#include "Voltage_data.h"
-#include "AC_data.h"
+#include "PowMr_data.h"
 #include "Credentials.h"
 
 
-WebServer server(80);
+ESP8266WebServer server(80);
 boolean access_point = false;
 
 
 Credentials cred=Credentials();
 
-Temperature_data temp=Temperature_data(T8,9);
-Voltage_data volt=Voltage_data(A4,cred.getratio()); //5
-AC_data ac=AC_data(); // 12 14
+//Temperature_data temp=Temperature_data(D8,9);
+//Voltage_data volt=Voltage_data(A0,cred.getratio()); //5
+//AC_data ac=AC_data(D6,D5); // 12 14
 
 volatile uint32_t access_point_start = 0;
 
@@ -28,9 +24,9 @@ void handleRestart() {
   ESP.restart();
 }
 
-void handleFindDevices()
+/*void handleFindDevices()
 { Serial.println("handleFindDevices");
-  OneWire ow(T8);
+  OneWire ow(D8);
   ow.reset_search();
   uint8_t address[8];
   uint8_t count = 0;
@@ -89,9 +85,9 @@ void handleFindDevices()
   }
   ow.reset_search();
   server.send(200, "text/plain", mess);
-}
+}*/
 
-void handleVoltage() {
+/*void handleVoltage() {
   Voltage_data volt_aux=Voltage_data(A0,cred.getratio()); //5
   String message = volt_aux.read_data();
   server.send(200, "application/json", message);
@@ -103,10 +99,10 @@ void handleAC() {
 }
 
 void handleTemperature() {
-  Temperature_data temp_aux=Temperature_data(T8,9);
+  Temperature_data temp_aux=Temperature_data(D8,9);
   String message = temp_aux.read_data();
   server.send(200, "application/json", message);
-}
+}*/
 
 void handlechangecredentials() {
   String message = "";
@@ -179,27 +175,27 @@ void setup() {
     access_point_start = millis();
   }
 
-  temp=Temperature_data(T8,9);//4 now 15 -> 33
-  volt=Voltage_data(A4,50); //5
-  ac=AC_data(); // 12 14
+  //temp=Temperature_data(D8,9);//4 now 15
+  //volt=Voltage_data(A0,50); //5
+  //ac=AC_data(D6,D5); // 12 14
   
   
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.on("/", handleRoot);
-  server.on("/temperature", handleTemperature);
+  /*server.on("/temperature", handleTemperature);
   server.on("/voltage", handleVoltage);
-  server.on("/ac", handleAC);
+  server.on("/ac", handleAC);*/
   server.on("/change", handlechangecredentials);
-  server.on("/scanonewire", handleFindDevices);
+  //server.on("/scanonewire", handleFindDevices);
   server.on("/restart", handleRestart);
   server.begin();
   Serial.println("HTTP server started");
   // Start up the library
   
-  //Serial.println(temp.read_data());
-  //Serial.println(volt.read_data());
-  //Serial.println(ac.read_data());
+  /*Serial.println(temp.read_data());
+  Serial.println(volt.read_data());
+  Serial.println(ac.read_data());*/
   
 }
 
